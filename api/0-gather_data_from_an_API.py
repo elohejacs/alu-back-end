@@ -1,67 +1,88 @@
 #!/usr/bin/python3
+
 """
-This script fetches TODO list progress of an employee using an API.
-It accepts an employee ID as a command-line argument and displays the 
-employee's name, the number of completed tasks, and their titles in the
-specified format.
+This script fetches the task data of a given employee from the public 
+API (jsonplaceholder.typicode.com) and displays the progress of completed tasks.
+
+It takes an employee ID as a command-line argument and prints the following:
+
+1. The employee's name.
+2. The number of completed tasks vs the total number of tasks.
+3. The titles of completed tasks.
+
+The script uses the requests module to fetch the data from the API and handles 
+error cases gracefully.
+
+Usage:
+    $ python3 0-gather_data_from_an_API.py <employee_id>
 """
 
 import requests
 import sys
 
-def get_employee_todo_progress(employee_id):
+
+def fetch_employee_tasks(employee_id):
     """
-    Retrieves the TODO list and employee details from the API and 
-    displays the progress of completed tasks.
+    Fetches the tasks for a given employee from the API.
 
     Args:
-        employee_id (int): The ID of the employee to fetch the TODO list for.
+        employee_id (int): The ID of the employee.
+
+    Returns:
+        list: A list of task dictionaries.
     """
-    # API URL for the user's TODO data
+    # Define the API URL
     url = f"https://jsonplaceholder.typicode.com/users/{employee_id}/todos"
     
-    # Make a GET request to the API to fetch TODO list
-    response = requests.get(url)
+    try:
+        # Send GET request to the API
+        response = requests.get(url)
+        # Raise an exception if the response status is not 200 OK
+        response.raise_for_status()
+        # Return the JSON data
+        return response.json()
     
-    # Check if the response is successful (status code 200)
-    if response.status_code == 200:
-        todos = response.json()
-        
-        # Get the employee name by fetching user info
-        user_url = f"https://jsonplaceholder.typicode.com/users/{employee_id}"
-        user_response = requests.get(user_url)
-        if user_response.status_code == 200:
-            user_info = user_response.json()
-            employee_name = user_info['name']
-        else:
-            print("Failed to retrieve employee details.")
-            return
-        
-        # Calculate the number of completed tasks
-        total_tasks = len(todos)
-        completed_tasks = [task['title'] for task in todos if task['completed']]
-        completed_count = len(completed_tasks)
-        
-        # Print the employee's task progress
-        print(f"Employee {employee_name} is done with tasks({completed_count}/{total_tasks}):")
-        for task in completed_tasks:
-            print(f"\t {task}")
-    else:
-        print("Failed to retrieve TODO list.")
+    except requests.exceptions.RequestException as e:
+        # Handle any HTTP errors or request issues
+        print(f"Error fetching data: {e}")
+        sys.exit(1)
+
+
+def display_employee_progress(employee_id):
+    """
+    Displays the task progress of an employee.
+
+    Args:
+        employee_id (int): The ID of the employee.
+    """
+    # Fetch tasks for the given employee
+    tasks = fetch_employee_tasks(employee_id)
+    
+    # Retrieve employee's name from the first task (assumed)
+    employee_name = tasks[0].get('userId')  # Using get to access dictionary values safely
+    # Retrieve tasks related to the employee
+    completed_tasks = [task['title'] for task in tasks if task.get('completed')]
+    total_tasks = len(tasks)
+    completed_count = len(completed_tasks)
+    
+    # Print the required output
+    print(f"Employee {employee_name} is done with tasks({completed_count}/{total_tasks}):")
+    for task in completed_tasks:
+        print(f"\t {task}")
+
 
 if __name__ == "__main__":
-    """
-    Main function to handle command-line argument and call the function 
-    to get the employee TODO progress.
-    """
-    # Check if employee ID was passed as a command-line argument
+    # Ensure the script is run with an employee ID argument
     if len(sys.argv) != 2:
         print("Usage: python3 0-gather_data_from_an_API.py <employee_id>")
         sys.exit(1)
-
-    # Get the employee ID from the command-line arguments
+    
+    # Get employee ID from the command-line argument
     try:
         employee_id = int(sys.argv[1])
-        get_employee_todo_progress(employee_id)
     except ValueError:
-        print("Please provide a valid integer for employee ID.")
+        print("Error: Employee ID must be an integer.")
+        sys.exit(1)
+    
+    # Display the progress for the employee
+    display_employee_progress(employee_id)
