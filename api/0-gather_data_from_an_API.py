@@ -2,6 +2,7 @@
 """
 Script to fetch employee TODO list progress using an API.
 """
+
 import requests
 import sys
 
@@ -16,8 +17,8 @@ def fetch_todo_list(employee_id):
         print("User not found")
         return
 
-    employee_name = user.get("name").strip()
-    done_tasks = [task["title"].strip() for task in todos if task.get("completed")]
+    employee_name = user.get("name", "Unknown").strip()
+    done_tasks = [task.get("title", "").strip() for task in todos if task.get("completed")]
     total_tasks = len(todos)
 
     print("Employee {} is done with tasks({}/{}):".format(
@@ -31,4 +32,3 @@ if __name__ == "__main__":
         print("Usage: {} <employee_id>".format(sys.argv[0]))
     else:
         fetch_todo_list(int(sys.argv[1]))
-
