@@ -1,29 +1,34 @@
 #!/usr/bin/python3
-"""Module"""
-
+"""
+Script to fetch employee TODO list progress using an API.
+"""
 import requests
 import sys
 
-"""Module"""
 
-if __name__ == '__main__':
-    """IF SCRIPT IS NOT RUN AS MODULE"""
-    employee_id = sys.argv[1]
-    user_url = "https://jsonplaceholder.typicode.com/users/{}" \
-        .format(employee_id)
-    todos_url = "https://jsonplaceholder.typicode.com/users/{}/todos/" \
-        .format(employee_id)
+def fetch_todo_list(employee_id):
+    """Fetch and display the TODO list progress for an employee."""
+    url = "https://jsonplaceholder.typicode.com/"
+    user = requests.get("{}users/{}".format(url, employee_id)).json()
+    todos = requests.get("{}todos".format(url), params={"userId": employee_id}).json()
 
-    user_info = requests.get(user_url).json()
-    todos_info = requests.get(todos_url).json()
+    if not user or "name" not in user:
+        print("User not found")
+        return
 
-    employee_name = user_info["name"]
-    task_completed = list(filter(lambda obj:
-                                 (obj["completed"] is True), todos_info))
-    number_of_done_tasks = len(task_completed)
-    total_number_of_tasks = len(todos_info)
+    employee_name = user.get("name").strip()
+    done_tasks = [task["title"].strip() for task in todos if task.get("completed")]
+    total_tasks = len(todos)
 
-    print("Employee {} is done with tasks({}/{}):".
-          format(employee_name, number_of_done_tasks, total_number_of_tasks))
+    print("Employee {} is done with tasks({}/{}):".format(
+        employee_name, len(done_tasks), total_tasks))
+    for task in done_tasks:
+        print("\t {}".format(task))
 
-    [print("\t " + task["title"]) for task in task_completed]
+
+if __name__ == "__main__":
+    if len(sys.argv) != 2 or not sys.argv[1].isdigit():
+        print("Usage: {} <employee_id>".format(sys.argv[0]))
+    else:
+        fetch_todo_list(int(sys.argv[1]))
+
