@@ -1,45 +1,61 @@
 #!/usr/bin/python3
 """
-This script fetches an employee's tasks from the JSONPlaceholder API
-and exports them in JSON format, structured as follows:
-{
-    "USER_ID": [
-        {"task": "TASK_TITLE", "completed": TASK_COMPLETED_STATUS,
-         "username": "USERNAME"},
-        ...
-    ]
-}
-The output file is named USER_ID.json.
+Script to export employee task data to JSON format
 """
-
 import json
 import requests
 import sys
 
 
-def export_to_json(user_id):
-    """Fetch tasks for a given user and save them in a JSON file."""
-    user_id = str(user_id)  # Ensure user_id is a string
-    url = "https://jsonplaceholder.typicode.com/users/{}".format(user_id)
-    user_response = requests.get(url)
-    todos_response = requests.get(url + "/todos")
-    
-    if user_response.status_code != 200 or todos_response.status_code != 200:
-        return  # Exit if API request fails
-    
+def export_to_json(employee_id):
+    """Export employee tasks to JSON file"""
+    # Base URL for the API
+    base_url = "https://jsonplaceholder.typicode.com"
+
+    # Get employee information
+    user_response = requests.get(f"{base_url}/users/{employee_id}")
+    if user_response.status_code != 200:
+        print(f"Employee with ID {employee_id} not found")
+        sys.exit(1)
+
     user = user_response.json()
+    username = user.get('username')
+
+    # Get tasks for the employee
+    todos_response = requests.get(f"{base_url}/users/{employee_id}/todos")
+    if todos_response.status_code != 200:
+        print(f"Could not fetch tasks for employee {employee_id}")
+        sys.exit(1)
+
     todos = todos_response.json()
-    
-    if "id" not in user or "username" not in user:
-        return  # Ensure user data is valid
-    
-    tasks = [{"task": t["title"], "completed": t["completed"],
-              "username": user["username"]} for t in todos]
-    
-    with open("{}.json".format(user_id), "w") as f:
-        json.dump({user_id: tasks}, f)
+
+    # Format tasks according to requirements
+    tasks_list = [
+        {
+            "task": todo.get('title'),
+            "completed": todo.get('completed'),
+            "username": username
+        }
+        for todo in todos
+    ]
+
+    # Create JSON object with required format
+    json_data = {str(employee_id): tasks_list}
+
+    # Write to file
+    filename = f"{employee_id}.json"
+    with open(filename, 'w') as jsonfile:
+        json.dump(json_data, jsonfile)
 
 
 if __name__ == "__main__":
-    if len(sys.argv) > 1 and sys.argv[1].isdigit():
-        export_to_json(int(sys.argv[1]))
+    if len(sys.argv) != 2:
+        print("Usage: python3 2-export_to_JSON.py <employee_id>")
+        sys.exit(1)
+
+    try:
+        employee_id = int(sys.argv[1])
+        export_to_json(employee_id)
+    except ValueError:
+        print("Employee ID must be an integer")
+        sys.exit(1)
