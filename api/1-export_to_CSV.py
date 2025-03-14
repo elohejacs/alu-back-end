@@ -33,7 +33,6 @@ def export_to_csv(employee_id):
     filename = f"{employee_id}.csv"
     with open(filename, mode='w', newline='') as csvfile:
         writer = csv.writer(csvfile, quoting=csv.QUOTE_ALL)
-        
         # Write each task as a row in the CSV
         for todo in todos:
             writer.writerow([
