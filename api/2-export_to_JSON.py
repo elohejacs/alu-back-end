@@ -4,7 +4,8 @@ This script fetches an employee's tasks from the JSONPlaceholder API
 and exports them in JSON format, structured as follows:
 {
     "USER_ID": [
-        {"task": "TASK_TITLE", "completed": TASK_COMPLETED_STATUS, "username": "USERNAME"},
+        {"task": "TASK_TITLE", "completed": TASK_COMPLETED_STATUS,
+         "username": "USERNAME"},
         ...
     ]
 }
@@ -21,10 +22,10 @@ def export_to_json(user_id):
     url = "https://jsonplaceholder.typicode.com/users/{}".format(user_id)
     user = requests.get(url).json()
     todos = requests.get(url + "/todos").json()
-    
+
     tasks = [{"task": t["title"], "completed": t["completed"],
               "username": user["username"]} for t in todos]
-    
+
     with open("{}.json".format(user_id), "w") as f:
         json.dump({user_id: tasks}, f)
 
